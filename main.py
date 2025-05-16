@@ -35,6 +35,7 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     bot.reply_to(message, "Привет")
@@ -65,6 +66,27 @@ def name_handler(message):
         bot.reply_to(message, f"Имя '{name}' обновлено.")
     except Exception as e:
         bot.reply_to(message, f"Ошибка при сохранении: {e}")
+
+@bot.message_handler(commands=['dump'])
+def dump_users(message):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id, name FROM users")
+        rows = cursor.fetchall()
+        conn.close()
+
+        if not rows:
+            bot.reply_to(message, "Пользователей пока нет.")
+            return
+
+        msg = "Пользователи:\n"
+        for row in rows:
+            msg += f"ID: {row[0]}, Имя: {row[1]}\n"
+
+        bot.reply_to(message, msg[:4096])  # Telegram ограничение на длину
+    except Exception as e:
+        bot.reply_to(message, f"Ошибка при чтении из базы: {e}")
 
 if __name__ == "__main__":
     print("Бот запущен...")
